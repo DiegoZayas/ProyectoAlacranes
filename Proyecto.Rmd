@@ -1,0 +1,612 @@
+---
+title: "Resumen Tecnico"
+author: 137760 Chacon Guillaumin Jorge Rodrigo , 137503 Diego Zayas Hernandez, 124251
+  Fabiola Farrera Fonseca
+date: "Monday, October 27, 2014"
+output:
+  html_document:
+    fig_height: 10
+    fig_width: 14
+  pdf_document: default
+---
+
+```{r Directorio, echo=FALSE}
+directorio <- "~/Documents/ITAM/QuintoSemestre/Estadistica-Aplicada-1/Proyecto"
+setwd(directorio)
+
+```
+#Carga de los Datos
+
+##Lectura de Datos
+
+En esta seccion se realiza la lectura de los 99 archivos proporcionados por la Secretaria de Salud con respecto al numero de casos por intoxicacion por picadura de alacran, la carga se realiza en el  siguiente orden:casos registrados por fuente notificacion, casos registrados por grupo de edad y casos registrados por mes. Para cada una de las tres categorias antes mencionadas se realiza en un inicio la carga de los datos correspondientes al genero femenino, posteriormente el masculino y finalmente los datos generales.
+Se realiza a su vez la consolidacion de los archivos por categoria, para generan tres archivos consolidados "Picadura.Alacran.Fuente","Picadura.Alacran.Edad" y "Picadura.Alacran.Periodo".
+
+```{r LecturaDatos}
+
+#Fuente de Notificacion
+library(plyr)
+
+alacran.fuente <- NULL
+titulos.fuente <- NULL
+for (i in 1:11){
+alacran.fuente[[i]] <- read.csv(paste("./DATOS/BRUTOS/fuente-f",i+2002,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.fuente[i] <- paste("fuente-f",i+2002,sep="")
+}
+for (i in 12:22){
+alacran.fuente[[i]] <- read.csv(paste("./DATOS/BRUTOS/fuente-m",i+1991,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.fuente[i] <- paste("fuente-m",i+1991,sep="")
+}
+for (i in 23:33){
+alacran.fuente[[i]] <- read.csv(paste("./DATOS/BRUTOS/fuente-g",i+1980,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.fuente[i] <- paste("fuente-g",i+1980,sep="")
+}
+
+names(alacran.fuente) <- titulos.fuente
+
+picadura.alacran.fuente <- ldply(alacran.fuente,data.frame)
+
+save(picadura.alacran.fuente, file="Picadura_Alacran_Fuente.RData")
+
+#Grupo de Edad
+
+alacran.edad <- NULL
+titulos.edad <- NULL
+for (i in 1:11){
+alacran.edad[[i]] <- read.csv(paste("./DATOS/BRUTOS/edad-f",i+2002,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.edad[i] <- paste("edad-f",i+2002,sep="")
+}
+for (i in 12:22){
+alacran.edad[[i]] <- read.csv(paste("./DATOS/BRUTOS/edad-m",i+1991,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.edad[i] <- paste("edad-m",i+1991,sep="")
+}
+for (i in 23:33){
+alacran.edad[[i]] <- read.csv(paste("./DATOS/BRUTOS/edad-g",i+1980,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.edad[i] <- paste("edad-g",i+1980,sep="")
+}
+
+names(alacran.edad) <- titulos.edad
+
+picadura.alacran.edad <- ldply(alacran.edad,data.frame)
+
+save(picadura.alacran.edad, file="Picadura_Alacran_Edad.RData")
+
+#Mes de Observacion
+
+alacran.mes <- NULL
+titulos.mes <- NULL
+for (i in 1:11){
+alacran.mes[[i]] <- read.csv(paste("./DATOS/BRUTOS/mes-f",i+2002,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.mes[i] <- paste("mes-f",i+2002,sep="")
+}
+for (i in 12:22){
+alacran.mes[[i]] <- read.csv(paste("./DATOS/BRUTOS/mes-m",i+1991,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.mes[i] <- paste("mes-m",i+1991,sep="")
+}
+for (i in 23:33){
+alacran.mes[[i]] <- read.csv(paste("./DATOS/BRUTOS/mes-g",i+1980,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.mes[i] <- paste("mes-g",i+1980,sep="")
+}
+
+names(alacran.mes) <- titulos.mes
+picadura.alacran.mes <- ldply(alacran.mes,data.frame)
+
+save(picadura.alacran.mes, file="Picadura_Alacran_Mes.RData")
+```
+
+##Inspeccion de los Datos
+
+A continuacion, con el proposito de introducir el contenido y de los archivos consolidados se realiza una extraccion de cada uno de ello, se toman de cada uno las primeras 6 observaciones.
+
+```{r Primeros_Datos}
+
+head(picadura.alacran.fuente)
+
+head(picadura.alacran.edad)
+
+head(picadura.alacran.mes)
+
+```
+
+Con el mismo fin, se presentan las dimensiones de cada uno de los archivos consolidados, las variables que contiene cada uno de los archivos y su clase.
+
+Dimensiones:
+```{r Dimensiones_Table}
+
+dim(picadura.alacran.fuente)
+
+dim(picadura.alacran.edad)
+
+dim(picadura.alacran.mes)
+
+```
+
+Variables y sus Clases:
+```{r Estructura de la Tabla}
+
+str(picadura.alacran.fuente)
+
+str(picadura.alacran.edad)
+
+str(picadura.alacran.mes)
+
+```
+
+#Organizacion de los Datos
+
+Con el mismo objetivo con que se realiza la limpieza de los datos, se lleva a cabo la organizacion de los datos; los cambios se realizados se presentan a continuacion.
+
+##Inclusion de las variables Periodo y Sexo
+
+Considerando necesaria la segregacion de los datos por periodo en que se suscita la picadura de alacran y por sexo se introducen dos nuevas variables, periodo y genero, en cada uno de los archivos.
+
+```{r AgregarColumnas}
+
+picadura.alacran.fuente$Periodo <- factor(substr(picadura.alacran.fuente$.id,9,12), ordered=TRUE)
+picadura.alacran.fuente$Sexo <- factor(substr(picadura.alacran.fuente$.id,8,8))
+picadura.alacran.fuente$.id <- NULL
+picadura.alacran.fuente <- within(picadura.alacran.fuente,{
+  Sexo <- gsub("m","Masculino",Sexo,fixed=TRUE)
+  Sexo <- gsub("f","Femenino",Sexo,fixed=TRUE)
+  Sexo <- gsub("g","General",Sexo,fixed=TRUE)
+ })
+
+save(picadura.alacran.fuente, file="Picadura_Alacran_Fuente(Sexo-Periodo).RData")
+
+picadura.alacran.edad$Periodo <- factor(substr(picadura.alacran.edad$.id,7,10), ordered=TRUE)
+picadura.alacran.edad$Sexo <- factor(substr(picadura.alacran.edad$.id,6,6))
+picadura.alacran.edad$.id <- NULL
+picadura.alacran.edad <- within(picadura.alacran.edad,{
+  Sexo <- gsub("m","Masculino",Sexo,fixed=TRUE)
+  Sexo <- gsub("f","Femenino",Sexo,fixed=TRUE)
+  Sexo <- gsub("g","General",Sexo,fixed=TRUE)
+ })
+
+save(picadura.alacran.edad, file="Picadura_Alacran_Edad(Sexo-Periodo).RData")
+
+picadura.alacran.mes$Periodo <- factor(substr(picadura.alacran.mes$.id,6,9), ordered=TRUE)
+picadura.alacran.mes$Sexo <- factor(substr(picadura.alacran.mes$.id,5,5))
+picadura.alacran.mes$.id <- NULL
+picadura.alacran.mes <- within(picadura.alacran.mes,{
+  Sexo <- gsub("m","Masculino",Sexo,fixed=TRUE)
+  Sexo <- gsub("f","Femenino",Sexo,fixed=TRUE)
+  Sexo <- gsub("g","General",Sexo,fixed=TRUE)
+ })
+
+save(picadura.alacran.mes, file="Picadura_Alacran_Mes(Sexo-Periodo).RData")
+
+```
+
+#Limpieza de los Datos
+
+Con el fin de obtener datos de mayor calidad y fiabilidad, se realiza la limpieza de los tres archivos consolidados, las modificaciones necesarias se presentan a continuacion.
+
+La primera modificacion considerada necesaria es eliminar los espacios que se se encuentran en los datos numericos del archivo "Picadura.Alacran.Fuente", "Picadura.Alacran.Edad" y "Picadura.Alacran.Mes"
+
+```{r QuitarEspacios}
+picadura.alacran.mes <- within(picadura.alacran.mes, {
+     ENE <- gsub("[ ]{1,}","",ENE)
+     FEB <- gsub("[ ]{1,}","",FEB)
+     MAR <- gsub("[ ]{1,}","",MAR)
+     ABR <- gsub("[ ]{1,}","",ABR)
+     MAY <- gsub("[ ]{1,}","",MAY)
+     JUN <- gsub("[ ]{1,}","",JUN)
+     JUL <- gsub("[ ]{1,}","",JUL)
+     AGO <- gsub("[ ]{1,}","",AGO)
+     SEP <- gsub("[ ]{1,}","",SEP)
+     OCT <- gsub("[ ]{1,}","",OCT)
+     NOV <- gsub("[ ]{1,}","",NOV)
+     DIC <- gsub("[ ]{1,}","",DIC)
+     Total <- gsub("[ ]{1,}","",Total)
+     Tasa. <- gsub("[ ]{1,}","",Tasa.)
+ })
+
+picadura.alacran.fuente <- within(picadura.alacran.fuente, {
+     SALUD <- gsub("[ ]{1,}","",SALUD)
+     IMSS.ORD <- gsub("[ ]{1,}","",IMSS.ORD)
+     ISSSTE <- gsub("[ ]{1,}","",ISSSTE)
+     IMSS.OP <- gsub("[ ]{1,}","",IMSS.OP)
+     DIF <- gsub("[ ]{1,}","",DIF)
+     PEMEX <- gsub("[ ]{1,}","",PEMEX)
+     SEDENA <- gsub("[ ]{1,}","",SEDENA)
+     SEMAR <- gsub("[ ]{1,}","",SEMAR)
+     OTRAS <- gsub("[ ]{1,}","",OTRAS)
+     Total <- gsub("[ ]{1,}","",Total)
+ })
+
+picadura.alacran.edad <- within(picadura.alacran.edad,{
+  X.0.1. <- gsub("[ ]{1,}","",X.0.1.)
+  X.1.4. <- gsub("[ ]{1,}","",X.1.4.)
+  X.5.9. <- gsub("[ ]{1,}","",X.5.9.)
+  X.10.14. <- gsub("[ ]{1,}","",X.10.14.)
+  X.15.19. <- gsub("[ ]{1,}","",X.15.19.)
+  X.20.24. <- gsub("[ ]{1,}","",X.20.24.)
+  X.25.44. <- gsub("[ ]{1,}","",X.25.44.)
+  X.45.49. <- gsub("[ ]{1,}","",X.45.49.)
+  X.50.59. <- gsub("[ ]{1,}","",X.50.59.)
+  X.60.64. <- gsub("[ ]{1,}","",X.60.64.)
+  X.64.... <- gsub("[ ]{1,}","",X.64....)
+  Ign. <- gsub("[ ]{1,}","",Ign.)
+  Total <- gsub("[ ]{1,}","",Total)
+})
+
+```
+
+
+
+
+
+
+##Conversion a escala numerica
+
+Por otra parte considerando necesario contrar con datos que permitan realizacion de analisis de medidadas descripitivas y c
+```{r Numeric}
+picadura.alacran.edad <- within(picadura.alacran.edad,{
+  X.0.1. <- as.numeric(X.0.1.)
+  X.1.4. <- as.numeric(X.1.4.)
+  X.5.9. <- as.numeric(X.5.9.)
+  X.10.14. <- as.numeric(X.10.14.)
+  X.15.19. <- as.numeric(X.15.19.)
+  X.20.24. <- as.numeric(X.20.24.)
+  X.25.44. <- as.numeric(X.25.44.)
+  X.45.49. <- as.numeric(X.45.49.)
+  X.50.59. <- as.numeric(X.50.59.)
+  X.60.64. <- as.numeric(X.60.64.)
+  X.64.... <- as.numeric(X.64....)
+  Ign. <- as.numeric(Ign.)
+  Total <- as.numeric(Total)
+})
+picadura.alacran.fuente <- within(picadura.alacran.fuente, {
+  SALUD <- as.numeric(SALUD)
+  IMSS.ORD <- as.numeric(IMSS.ORD)
+  ISSSTE <- as.numeric(ISSSTE)
+  IMSS.OP <- as.numeric(IMSS.OP)
+  DIF <- as.numeric(DIF)
+  PEMEX <- as.numeric(PEMEX)
+  SEDENA <- as.numeric(SEDENA)
+  SEMAR <- as.numeric(SEMAR)
+  OTRAS <- as.numeric(OTRAS)
+  Total <- as.numeric(Total)
+})
+
+picadura.alacran.mes <- within(picadura.alacran.mes, {
+    ENE <- as.numeric(ENE)
+    FEB <- as.numeric(FEB)
+    MAR <- as.numeric(MAR)
+    ABR <- as.numeric(ABR)
+    MAY <- as.numeric(MAY)
+    JUN <- as.numeric(JUN)
+    JUL <- as.numeric(JUL)
+    AGO <- as.numeric(AGO)
+    SEP <- as.numeric(SEP)
+    OCT <- as.numeric(OCT)
+    NOV <- as.numeric(NOV)
+    DIC <- as.numeric(DIC)
+    Total <- as.numeric(Total)
+    Tasa. <- as.numeric(Tasa.)
+})
+
+```
+
+```{r CambiarNomColumnas}
+
+names(picadura.alacran.edad) <- c("Estado","Menor a 1","1 a 4","5 a 9", "10 a 14","15 a 19", "20 a 24","25 a 44", "45 a 49","50 a 59"," 60 a 64","64 o Mas","Desconocida","Total", "Periodo","Sexo")
+
+```
+
+###Valores Faltantes
+```{r Registros Nulos}
+
+sum(is.na(picadura.alacran.fuente))
+
+sum(is.na(picadura.alacran.edad))
+
+sum(is.na(picadura.alacran.mes))
+
+```
+
+Estructura de las tablas hasta ahora y conversion de las variables Sexo y Estado en escala nominal
+```{r EstructuraTablas}
+#Nivel de informacion: Tipo de Fuente
+picadura.alacran.fuente$Estado <- factor(picadura.alacran.fuente$Estado)
+picadura.alacran.fuente$Sexo <- factor(picadura.alacran.fuente$Sexo)
+
+save(picadura.alacran.fuente,file="Picadura_Fuente_Limp.RData")
+
+str(picadura.alacran.fuente)
+
+#Nivel de informacion: Grupo de edad
+picadura.alacran.edad$Estado <- factor(picadura.alacran.edad$Estado)
+picadura.alacran.edad$Sexo <- factor(picadura.alacran.edad$Sexo)
+
+save(picadura.alacran.edad,file="Picadura_Edad_Limp.RData")
+
+str(picadura.alacran.edad)
+
+#Nivel de informacion: Mes
+picadura.alacran.mes$Estado <- factor(picadura.alacran.mes$Estado)
+picadura.alacran.mes$Sexo <- factor(picadura.alacran.mes$Sexo)
+
+save(picadura.alacran.mes,file="Picadura_Mes_Limp.RData")
+
+str(picadura.alacran.mes)
+
+```
+Resumen de los Datos
+
+```{r Resumen de los Datos}
+
+summary(picadura.alacran.fuente)
+
+summary(picadura.alacran.edad)
+
+summary(picadura.alacran.mes)
+
+```
+
+
+Cifras de Control
+```{r ValidacionFuente}
+
+mujeresf.periodo <-  aggregate(Total~ Periodo,data=subset(picadura.alacran.fuente, Sexo=="Femenino"),sum) 
+colnames(mujeresf.periodo) <- c("Periodo","Femenino")
+
+hombresf.periodo <- aggregate(Total~ Periodo,data=subset(picadura.alacran.fuente, Sexo=="Masculino"),sum)
+colnames(hombresf.periodo) <- c("Periodo","Masculino")
+
+generalf.periodo <- aggregate(Total~ Periodo,data=subset(picadura.alacran.fuente, Sexo=="General"),sum)
+colnames(generalf.periodo) <- c("Periodo","General")
+
+#Se crearon 3 tablas con la suma de casos por periodo para los diferentes textos (femenino, masculino y general)
+
+verificacion.fuente <- merge(merge(generalf.periodo,hombresf.periodo),mujeresf.periodo)
+#Se juntan las 3 tablas en una sola
+
+verificacion.fuente$Validacion <- as.list(rowSums(subset(verificacion.fuente,TRUE,c(Masculino,Femenino)),na.rm=FALSE))
+#Se agrega una columna con la suma de la columna Femenino y Masculino
+
+save(verificacion.fuente,file="Validacion_Fuente.RData")
+verificacion.fuente
+```
+
+```{r VerificacionEdad}
+
+mujerese.periodo <-  aggregate(Total~ Periodo,data=subset(picadura.alacran.edad, Sexo=="Femenino"),sum)
+colnames(mujerese.periodo) <- c("Periodo","Femenino")
+
+hombrese.periodo <- aggregate(Total~ Periodo,data=subset(picadura.alacran.edad, Sexo=="Masculino"),sum)
+colnames(hombrese.periodo) <- c("Periodo","Masculino")
+
+generale.periodo <- aggregate(Total~ Periodo,data=subset(picadura.alacran.edad, Sexo=="General"),sum)
+colnames(generale.periodo) <- c("Periodo","General")
+
+#Se crearon 3 tablas con la suma de casos por periodo para los diferentes textos (femenino, masculino y general)
+
+verificacion.edad <- merge(merge(generale.periodo,hombrese.periodo),mujerese.periodo)
+#Se juntan las 3 tablas en una sola
+
+verificacion.edad$Validacion <- as.list(rowSums(subset(verificacion.edad,TRUE,c(Masculino,Femenino)),na.rm=FALSE))
+#Se agrega una columna con la suma de la columna Femenino y Masculino
+
+save(verificacion.edad,file="Validacion_Edad.RData")
+verificacion.edad
+
+```
+
+```{r VerificacionMes}
+
+mujeresm.periodo <-  aggregate(Total~ Periodo,data=subset(picadura.alacran.mes, Sexo=="Femenino"),sum)
+colnames(mujeresm.periodo) <- c("Periodo","Femenino")
+
+hombresm.periodo <- aggregate(Total~ Periodo,data=subset(picadura.alacran.mes, Sexo=="Masculino"),sum)
+colnames(hombresm.periodo) <- c("Periodo","Masculino")
+
+generalm.periodo <- aggregate(Total~ Periodo,data=subset(picadura.alacran.mes, Sexo=="General"),sum)
+colnames(generalm.periodo) <- c("Periodo","General")
+
+#Se crearon 3 tablas con la suma de casos por periodo para los diferentes textos (femenino, masculino y general)
+
+verificacion.mes <- merge(merge(generalm.periodo,hombresm.periodo),mujeresm.periodo)
+#Se juntan las 3 tablas en una sola
+
+verificacion.mes$Validacion <- as.list(rowSums(subset(verificacion.mes,TRUE,c(Masculino,Femenino)),na.rm=FALSE))
+#Se agrega una columna con la suma de la columna Femenino y Masculino
+
+save(verificacion.mes,file="Validacion_Mes.RData")
+verificacion.mes
+
+```
+
+###Conversion de las tablas al formato largo
+```{r CambioFormato}
+library(reshape2)
+pic.alacran.estado <- 
+picadura.alacran.fuente$Total <- NULL
+picadura.alacran.edad$Total <- NULL
+picadura.alacran.mes$Total <- NULL
+
+PICADURA.ALACRAN.EDAD <- melt(data=picadura.alacran.edad,id=c("Estado","Periodo","Sexo"))
+names(PICADURA.ALACRAN.EDAD) <- c("Estado","Periodo","Sexo","Grupo de Edad","No.Picaduras")
+
+save(PICADURA.ALACRAN.EDAD,file="Alacran_FLargo_Edad.RData")
+
+str(PICADURA.ALACRAN.EDAD)
+
+PICADURA.ALACRAN.FUENTE <- melt(data=picadura.alacran.fuente,id=c("Estado","Periodo","Sexo"))
+names(PICADURA.ALACRAN.FUENTE) <- c("Estado","Periodo","Sexo","Institucion","No.Picaduras")
+
+save(PICADURA.ALACRAN.FUENTE, file="Alacran_FLargo_Fuente.RData")
+
+str(PICADURA.ALACRAN.FUENTE)
+
+PICADURA.ALACRAN.MES <- melt(data=picadura.alacran.mes,id=c("Estado","Periodo","Sexo"),na.rm=TRUE)
+names(PICADURA.ALACRAN.MES) <- c("Estado","Periodo","Sexo","Mes","No.Picaduras")
+
+save(PICADURA.ALACRAN.MES, file="Alacran_FLargo_Mes.RData")
+
+str(PICADURA.ALACRAN.MES)
+
+```
+
+##Analisis Exploratorio
+
+**Fuente de Notificacion**
+
+Creamos una grafica auxiliar que nos diga el numero total de casos de intoxicacion por picadura de alacran por Institucion que reporta en cada periodo de observacion
+
+```{r TablaAuxFuente}
+institucion.per <- NULL
+periodo <- c(2003:2013)
+for (i in 1:11){
+  institucion.per[[i]] <- as.list(colSums((subset(picadura.alacran.fuente,Periodo==periodo[i] & Sexo=="General"))[,2:10],na.rm=TRUE))
+}
+
+names(institucion.per) <- periodo
+
+institucion.periodo <- ldply(institucion.per,data.frame)
+
+names(institucion.periodo) <- c("Periodo","SALUD","IMSS.ORD","ISSSTE","IMSS.OP","DIF","PEMEX","SEDENA","SEMAR","OTRAS")
+
+#La pasamos al formato largo
+
+INSTITUCION.PERIODO <- melt(institucion.periodo,id=c("Periodo"),variable.name="Institucion",value.name="No.Picaduras")
+
+```
+
+
+
+**Grafica 1**
+```{r Grafica1Fuente}
+
+library(ggplot2)
+
+
+ggplot(INSTITUCION.PERIODO,aes(Periodo,No.Picaduras,group=Institucion))+geom_line(aes(colour=Institucion)) +facet_wrap(~Institucion,ncol=3)+ geom_point(aes(colour=Institucion))+labs(title="Numero de picaduras reportadas por institucion (2003-2013)",x="Periodo",y="Numero de picaduras")+theme(axis.text.x=element_text(angle=90))+theme(legend.position="none")
+
+```
+
+**Grafica 2: Barplot**
+```{r Grafica2Fuente}
+
+ggplot(INSTITUCION.PERIODO,aes(x=Institucion,y=No.Picaduras,group=Periodo,fill=Institucion)) +geom_bar(stat="identity",aes(colour=Institucion))+facet_wrap(~Periodo,ncol=3)+theme_bw()+theme(axis.text.x=element_text(angle=90,size=10),strip.text = element_text(face = "bold"),strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),axis.ticks=element_line(colour=grey(.80)),axis.title = element_text(colour=grey(.45)))+labs(title="Numero de picaduras por Institucion reportadas cada periodo",x="Institucion",y="Numero de Picaduras")
+
+```
+
+
+**Mensual**
+
+Creamos una tabla auxiliar que nos indique el numero de picaduras de alacran por mes en cada periodo de observacion.
+
+```{r CreacionTablaAuxiliarMes}
+mes.per <- NULL
+periodo <- c(2003:2013)
+for (i in 1:11){
+  mes.per[[i]] <- as.list(colSums((subset(picadura.alacran.mes,Periodo==periodo[i] & Sexo=="General"))[,3:14],na.rm=TRUE))
+}
+
+names(mes.per) <- periodo
+
+mes.periodo <- ldply(mes.per,data.frame)
+
+names(mes.periodo) <- c("Periodo","ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC")
+
+MES.PERIODO <- melt(mes.periodo,id=c("Periodo"),variable.name="Mes",value.name="No.Picaduras",na.rm=TRUE)
+
+head(MES.PERIODO)
+```
+
+Grafica Uno: Evolucion anual de los casos de picadura de alacran (2003-2013)
+```{r Grafica1Mes}
+
+ggplot(MES.PERIODO,aes(x=Mes,y=No.Picaduras,group=Periodo))+geom_line(aes(colour=Periodo))+geom_point(aes(colour=Periodo),size=2.5)+facet_wrap(~Periodo,ncol=3)+theme_bw()+theme(axis.text.x=element_text(angle=90,size=10),strip.text = element_text(face = "bold"),strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),axis.ticks=element_line(colour=grey(.80)),axis.title = element_text(colour=grey(.45)))+labs(title="Evolucion anual de los casos reportados de picadura de alacran",x="Mes",y="Numero de Picaduras")+theme(legend.position="none")+scale_x_discrete("Mes",labels=c("ENE"="Enero","FEB"="Febrero","MAR"="Marzo","ABR"="Abril","MAY"="Mayo","JUN"="Junio","JUL"="Julio","AGO"="Agosto","SEP"="Septiembre","OCT"="Octubre","NOV"="Noviembre","DIC"="Diciembre"))
+
+```
+
+Grafica Dos: Tendencia Mensual vs Media Mensual (2003-2013)
+```{r Grafica2Mes}
+#Creamos una tabla con las medias de cada mes
+
+media.mes.1 <- as.data.frame(sapply(mes.periodo[,2:13],mean))
+media.mes.1$Mes <- c("ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC")
+names(media.mes.1) <- c("No.Picaduras","Mes")
+
+#grafica
+ggplot(MES.PERIODO,aes(x=Periodo,y=No.Picaduras,group=Mes))+geom_line(aes(colour=Mes))+geom_point(aes(colour=Mes),size=2.5)+facet_wrap(~Mes,ncol=4)+theme_bw()+theme(axis.text.x=element_text(angle=90,size=10),strip.text = element_text(face = "bold"),strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),axis.ticks=element_line(colour=grey(.80)),axis.title = element_text(colour=grey(.45)))+labs(title="Tendencia mensual por periodo de observacion comparada con la media del mes",x="Mes",y="Numero de Picaduras")+theme(legend.position="none")+geom_hline(data=media.mes.1,aes(yintercept=No.Picaduras,group=Mes),linetype=2)+ scale_colour_hue(h=c(180, 270))
+
+```
+
+Mostramos los promedios mensuales de casos registrados.  
+```{r PromedioBarPlot}
+
+color.prom <- c(NA,NA,NA,NA, "withcolor", NA, NA,NA,NA,NA,NA,NA)
+
+ggplot(media.mes.1,aes(x=Mes,y=No.Picaduras,fill=color.prom))+geom_bar(stat="identity")+theme_bw()+theme(axis.text.x=element_text(size=10),strip.text = element_text(face = "bold"),strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),axis.ticks=element_line(colour=grey(.80)),axis.title = element_text(colour=grey(.45)))+labs(title="Promedio Mensual de casos de intoxicacion por picadura de alacran",x="Mes",y="Numero de Picaduras")+theme(legend.position="none")+xlim("ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC")
+
+
+```
+Los meses en los que se presentan, en promedio, el mayor numero de casos es entre los meses de abril y junio, y alcanza su maximo en el mes de mayo. 
+
+Fijandonos en el mes de Mayo, veremos, en promedio, en que estado se presenta la mayor cantidad de casos registrados.
+```{r PromMayoPorEstado}
+library(reshape)
+
+#Hacemos una tabla con el promedio de cada estado en el mes de mayo para el periodo de observacion (2003-2013)
+
+Estado.prom <- cast(subset(PICADURA.ALACRAN.MES,Mes=="MAY" & Sexo=="General"), Mes~Estado, mean)
+
+#Convertimos la tabla al formato largo
+ESTADO.PROM.MAYO <- melt(Estado.prom,id=c("Mes"),variable.name="Estado")
+
+#Creamos la grafica
+ggplot(ESTADO.PROM.MAYO,aes(x=reorder(Estado,value),y=value,fill=Mes))+geom_bar(stat="identity")+theme_bw()+theme(strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),axis.ticks=element_line(colour=grey(.80)),axis.title = element_text(colour=grey(.45)))+labs(title="Promedio por estado en el mes de mayo de los casos de picadura de alacran",x="Estado",y="Numero de picaduras")+theme(legend.position="none")+coord_flip()+scale_fill_manual(values = c("skyblue3"))
+
+```
+
+Comparacion de la evolucion anual de los casos de intoxicacion por picadura de alacran por generos
+```{r CasosHombresMujeres}
+#Primero hacemos una tabla con la suma mensual de cada a??o para cada sexo. Para esto hacemos dos: una para hombres y otra para mujeres; despues las juntamos con un merge
+mes.per.fem <- NULL
+periodo <- c(2003:2013)
+for (i in 1:11){
+  mes.per.fem[[i]] <- as.list(colSums((subset(picadura.alacran.mes,Periodo==periodo[i] & Sexo=="Femenino"))[,3:14],na.rm=TRUE))
+}
+
+names(mes.per.fem) <- periodo
+
+mes.periodo.fem <- ldply(mes.per.fem,data.frame)
+
+names(mes.periodo.fem) <- c("Periodo","ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC")
+mes.periodo.fem$Sexo <- "Femenino"
+
+mes.per.masc <- NULL
+periodo <- c(2003:2013)
+for (i in 1:11){
+  mes.per.masc[[i]] <- as.list(colSums((subset(picadura.alacran.mes,Periodo==periodo[i] & Sexo=="Masculino"))[,3:14],na.rm=TRUE))
+}
+
+names(mes.per.masc) <- periodo
+
+mes.periodo.masc <- ldply(mes.per.masc,data.frame)
+
+names(mes.periodo.masc) <- c("Periodo","ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC")
+mes.periodo.masc$Sexo <- "Masculino"
+
+mes.periodo.sexo <- merge(mes.periodo.fem,mes.periodo.masc,all=TRUE)
+
+
+#La convertimos a la estructura de formato largo
+SEXO.MES <- melt(mes.periodo.sexo,id=c("Periodo","Sexo"))
+names(SEXO.MES) <- c("Periodo","Sexo","Mes","No.Picaduras")
+
+#Creamos una tabla con el promedio de cada sexo para cada mes de observacion y la convertimos a la estructura de formato largo
+
+prom.sexo.mes <- cast(SEXO.MES,Mes~Sexo,mean)
+PROM.SEXO.MENS <- melt(prom.sexo.mes,id=c("Mes"),variable.name="Sexo")
+ 
+#Grafica
+
+ggplot(PROM.SEXO.MENS,aes(x=Mes,y=value,group=Sexo))+geom_line(aes(colour=Sexo),linetype=2, size=1)+geom_point(aes(colour=Sexo),size=3)+theme_bw()+theme(strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),axis.ticks=element_line(colour=grey(.80)),axis.title = element_text(colour=grey(.45)))+labs(title="Evolucion anual del numero de picaduras, en promedio, de hombre y mujeres",x="Mes",y="Numero de picaduras")
+
+```
+
+En general se ve que no hay mucha diferencia entre los casos registrados de hombres y de mujeres. La ligera diferencia entre los dos, especialmente entre los meses de febrero a junio, en donde se registraron m??s casos de mujeres, puede ser explicada por el hecho de que mas de la mitad del contacto con el alacran se da en los hogares y las mujeres, normalmente, est??n m??s tiempo en los hogares que los hombres.
