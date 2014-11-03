@@ -11,8 +11,16 @@ output:
 ---
 
 ```{r Directorio, echo=FALSE}
+library(knitr)
 directorio <- "~/Documents/ITAM/QuintoSemestre/Estadistica-Aplicada-1/Proyecto"
 setwd(directorio)
+knitr::opts_knit$set(root.dir = directorio)
+knitr::opts_chunk$set(fig.path = "GRAFICAS/FINALES/",fig.align = 'center', fig.width = 12, fig.height = 8,
+               cache.path = "CODIGO/CACHE/Cache_",cache = TRUE, 
+                      eval = TRUE, 
+                      warning = FALSE, message = FALSE,
+                      echo = TRUE, 
+                      comment = NA)
 
 ```
 #Carga de los Datos
@@ -46,7 +54,7 @@ names(alacran.fuente) <- titulos.fuente
 
 picadura.alacran.fuente <- ldply(alacran.fuente,data.frame)
 
-save(picadura.alacran.fuente, file="Picadura_Alacran_Fuente.RData")
+save(picadura.alacran.fuente, file="./DATOS/BRUTOS/Picadura_Alacran_Fuente.RData")
 
 #Grupo de Edad
 
@@ -69,7 +77,7 @@ names(alacran.edad) <- titulos.edad
 
 picadura.alacran.edad <- ldply(alacran.edad,data.frame)
 
-save(picadura.alacran.edad, file="Picadura_Alacran_Edad.RData")
+save(picadura.alacran.edad, file="./DATOS/BRUTOS/Picadura_Alacran_Edad.RData")
 
 #Mes de Observacion
 
@@ -91,7 +99,7 @@ titulos.mes[i] <- paste("mes-g",i+1980,sep="")
 names(alacran.mes) <- titulos.mes
 picadura.alacran.mes <- ldply(alacran.mes,data.frame)
 
-save(picadura.alacran.mes, file="Picadura_Alacran_Mes.RData")
+save(picadura.alacran.mes, file="./DATOS/BRUTOS/Picadura_Alacran_Mes.RData")
 ```
 
 ##Inspeccion de los Datos
@@ -151,7 +159,7 @@ picadura.alacran.fuente <- within(picadura.alacran.fuente,{
   Sexo <- gsub("g","General",Sexo,fixed=TRUE)
  })
 
-save(picadura.alacran.fuente, file="Picadura_Alacran_Fuente(Sexo-Periodo).RData")
+save(picadura.alacran.fuente, file="./DATOS/PROCESADOS/Picadura_Alacran_Fuente(Sexo-Periodo).RData")
 
 picadura.alacran.edad$Periodo <- factor(substr(picadura.alacran.edad$.id,7,10), ordered=TRUE)
 picadura.alacran.edad$Sexo <- factor(substr(picadura.alacran.edad$.id,6,6))
@@ -162,7 +170,7 @@ picadura.alacran.edad <- within(picadura.alacran.edad,{
   Sexo <- gsub("g","General",Sexo,fixed=TRUE)
  })
 
-save(picadura.alacran.edad, file="Picadura_Alacran_Edad(Sexo-Periodo).RData")
+save(picadura.alacran.edad, file="./DATOS/PROCESADOS/Picadura_Alacran_Edad(Sexo-Periodo).RData")
 
 picadura.alacran.mes$Periodo <- factor(substr(picadura.alacran.mes$.id,6,9), ordered=TRUE)
 picadura.alacran.mes$Sexo <- factor(substr(picadura.alacran.mes$.id,5,5))
@@ -173,7 +181,7 @@ picadura.alacran.mes <- within(picadura.alacran.mes,{
   Sexo <- gsub("g","General",Sexo,fixed=TRUE)
  })
 
-save(picadura.alacran.mes, file="Picadura_Alacran_Mes(Sexo-Periodo).RData")
+save(picadura.alacran.mes, file="./DATOS/PROCESADOS/Picadura_Alacran_Mes(Sexo-Periodo).RData")
 
 ```
 
@@ -311,7 +319,7 @@ Estructura de las tablas hasta ahora y conversion de las variables Sexo y Estado
 picadura.alacran.fuente$Estado <- factor(picadura.alacran.fuente$Estado)
 picadura.alacran.fuente$Sexo <- factor(picadura.alacran.fuente$Sexo)
 
-save(picadura.alacran.fuente,file="Picadura_Fuente_Limp.RData")
+save(picadura.alacran.fuente,file="./DATOS/PROCESADOS/Picadura_Fuente_Limp.RData")
 
 str(picadura.alacran.fuente)
 
@@ -319,7 +327,7 @@ str(picadura.alacran.fuente)
 picadura.alacran.edad$Estado <- factor(picadura.alacran.edad$Estado)
 picadura.alacran.edad$Sexo <- factor(picadura.alacran.edad$Sexo)
 
-save(picadura.alacran.edad,file="Picadura_Edad_Limp.RData")
+save(picadura.alacran.edad,file="./DATOS/PROCESADOS/Picadura_Edad_Limp.RData")
 
 str(picadura.alacran.edad)
 
@@ -327,7 +335,7 @@ str(picadura.alacran.edad)
 picadura.alacran.mes$Estado <- factor(picadura.alacran.mes$Estado)
 picadura.alacran.mes$Sexo <- factor(picadura.alacran.mes$Sexo)
 
-save(picadura.alacran.mes,file="Picadura_Mes_Limp.RData")
+save(picadura.alacran.mes,file="./DATOS/PROCESADOS/Picadura_Mes_Limp.RData")
 
 str(picadura.alacran.mes)
 
@@ -365,7 +373,7 @@ verificacion.fuente <- merge(merge(generalf.periodo,hombresf.periodo),mujeresf.p
 verificacion.fuente$Validacion <- as.list(rowSums(subset(verificacion.fuente,TRUE,c(Masculino,Femenino)),na.rm=FALSE))
 #Se agrega una columna con la suma de la columna Femenino y Masculino
 
-save(verificacion.fuente,file="Validacion_Fuente.RData")
+save(verificacion.fuente,file="./DATOS/PROCESADOS/Validacion_Fuente.RData")
 verificacion.fuente
 ```
 
@@ -388,7 +396,7 @@ verificacion.edad <- merge(merge(generale.periodo,hombrese.periodo),mujerese.per
 verificacion.edad$Validacion <- as.list(rowSums(subset(verificacion.edad,TRUE,c(Masculino,Femenino)),na.rm=FALSE))
 #Se agrega una columna con la suma de la columna Femenino y Masculino
 
-save(verificacion.edad,file="Validacion_Edad.RData")
+save(verificacion.edad,file="./DATOS/PROCESADOS/Validacion_Edad.RData")
 verificacion.edad
 
 ```
@@ -412,7 +420,7 @@ verificacion.mes <- merge(merge(generalm.periodo,hombresm.periodo),mujeresm.peri
 verificacion.mes$Validacion <- as.list(rowSums(subset(verificacion.mes,TRUE,c(Masculino,Femenino)),na.rm=FALSE))
 #Se agrega una columna con la suma de la columna Femenino y Masculino
 
-save(verificacion.mes,file="Validacion_Mes.RData")
+save(verificacion.mes,file="./DATOS/PROCESADOS/Validacion_Mes.RData")
 verificacion.mes
 
 ```
@@ -428,21 +436,21 @@ picadura.alacran.mes$Total <- NULL
 PICADURA.ALACRAN.EDAD <- melt(data=picadura.alacran.edad,id=c("Estado","Periodo","Sexo"))
 names(PICADURA.ALACRAN.EDAD) <- c("Estado","Periodo","Sexo","Grupo de Edad","No.Picaduras")
 
-save(PICADURA.ALACRAN.EDAD,file="Alacran_FLargo_Edad.RData")
+save(PICADURA.ALACRAN.EDAD,file="./DATOS/PROCESADOS/Alacran_FLargo_Edad.RData")
 
 str(PICADURA.ALACRAN.EDAD)
 
 PICADURA.ALACRAN.FUENTE <- melt(data=picadura.alacran.fuente,id=c("Estado","Periodo","Sexo"))
 names(PICADURA.ALACRAN.FUENTE) <- c("Estado","Periodo","Sexo","Institucion","No.Picaduras")
 
-save(PICADURA.ALACRAN.FUENTE, file="Alacran_FLargo_Fuente.RData")
+save(PICADURA.ALACRAN.FUENTE, file="./DATOS/PROCESADOS/Alacran_FLargo_Fuente.RData")
 
 str(PICADURA.ALACRAN.FUENTE)
 
 PICADURA.ALACRAN.MES <- melt(data=picadura.alacran.mes,id=c("Estado","Periodo","Sexo"),na.rm=TRUE)
 names(PICADURA.ALACRAN.MES) <- c("Estado","Periodo","Sexo","Mes","No.Picaduras")
 
-save(PICADURA.ALACRAN.MES, file="Alacran_FLargo_Mes.RData")
+save(PICADURA.ALACRAN.MES, file="./DATOS/PROCESADOS/Alacran_FLargo_Mes.RData")
 
 str(PICADURA.ALACRAN.MES)
 
